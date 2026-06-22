@@ -1,0 +1,2 @@
+GET http://localhost:8080/all-bookings
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyaXNoaUBnbWFpbC5jb20iLCJpYXQiOjE3ODIxMjE3NDQsImV4cCI6MTc4MjIwODE0NH0.lXBWiy47V0Z8jJvA88yDE-jx4964uERUo2Qwrr9sA-M
