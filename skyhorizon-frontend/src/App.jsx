@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import RagUpload from './pages/RagUpload';
 import './index.css';
+import AIChat from './components/AIChat/AIChat';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
+      <AIChat />
     </BookingProvider>
   );
 }

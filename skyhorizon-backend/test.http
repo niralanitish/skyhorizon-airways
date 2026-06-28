@@ -2,5 +2,5 @@ POST http://localhost:8080/api/ai/chat
 Content-Type: application/json
 
 {
-    "message": "How much cabin baggage is allowed?"
+    "message":"Summarize the baggage policy."
 }

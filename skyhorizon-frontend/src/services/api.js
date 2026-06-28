@@ -60,6 +60,17 @@ api.register = async (name, email, password) => {
   }
 };
 
+// AI endpoint
+api.askAI = async (message) => {
+  try {
+    const response = await api.post("/ai/chat", { message });
+    return response.data;
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || error.response?.data || error.message || "Failed to connect to AI service";
+    throw new Error(typeof errorMsg === "string" ? errorMsg : "Failed to connect to AI service");
+  }
+};
+
 export const airportCodes = {
   Hyderabad: "HYD",
   Delhi: "DEL",
