@@ -1,12 +1,12 @@
 package com.skyhorizon.skyhorizon_airways.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
-
-import java.util.List;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class CorsConfig {
@@ -17,13 +17,25 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(
-        List.of("http://localhost:*"));
+                List.of(
+                        "http://localhost:*",
+                        "https://*.vercel.app"
+                ));
 
         configuration.setAllowedMethods(
-                List.of("GET","POST","PUT","DELETE","OPTIONS"));
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "OPTIONS"
+                ));
 
         configuration.setAllowedHeaders(
                 List.of("*"));
+
+        configuration.setExposedHeaders(
+                List.of("Authorization"));
 
         configuration.setAllowCredentials(true);
 
