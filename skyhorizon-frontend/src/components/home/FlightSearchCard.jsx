@@ -39,6 +39,8 @@ export default function FlightSearchCard() {
   const [fromFilter, setFromFilter] = useState('');
   const [toFilter, setToFilter] = useState('');
 
+  const dateInputRef = useRef(null);
+
   // Refs for closing dropdowns on click outside
   const fromRef = useRef(null);
   const toRef = useRef(null);
@@ -273,13 +275,24 @@ export default function FlightSearchCard() {
 
         {/* Departure Date Picker */}
         <div className="w-full lg:flex-1 relative">
-          <label className="flex items-center gap-3.5 bg-navy-950/70 hover:bg-navy-900/70 border border-slate-800 hover:border-gold/30 rounded-xl px-4 py-3 cursor-pointer transition-all text-left">
+          <label 
+            onClick={(e) => {
+              e.preventDefault();
+              try {
+                dateInputRef.current?.showPicker();
+              } catch (err) {
+                dateInputRef.current?.focus();
+              }
+            }}
+            className="flex items-center gap-3.5 bg-navy-950/70 hover:bg-navy-900/70 border border-slate-800 hover:border-gold/30 rounded-xl px-4 py-3 cursor-pointer transition-all text-left"
+          >
             <IoCalendarOutline className="w-5 h-5 text-slate-400 shrink-0" />
             <div className="flex flex-col w-full relative leading-tight">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Depart</span>
               <span className="text-sm font-extrabold text-white mt-0.5">{formatDateLabel(departDate)}</span>
               <span className="text-[11px] font-semibold text-slate-400 mt-0.5">{getDayName(departDate)}</span>
               <input
+                ref={dateInputRef}
                 type="date"
                 value={departDate}
                 onChange={(e) => setDepartDate(e.target.value)}

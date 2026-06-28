@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   IoAirplaneOutline, 
   IoChevronForwardOutline,
@@ -26,8 +27,16 @@ import { AirlineLogo } from '../components/flights/FlightCard';
 
 // Utility to calculate Boarding Time (45 minutes before departure)
 const calculateBoardingTime = (depTime) => {
-  if (!depTime) return '05:15';
-  const [h, m] = depTime.split(':').map(Number);
+  if (!depTime) return '05:15 AM';
+  let cleanTime = depTime.replace(/ (AM|PM)/i, '');
+  const parts = cleanTime.split(':');
+  let h = Number(parts[0]) || 0;
+  let m = Number(parts[1]) || 0;
+  
+  const isPM = depTime.toLowerCase().includes('pm');
+  if (isPM && h !== 12) h += 12;
+  if (!isPM && h === 12) h = 0;
+  
   let bh = h;
   let bm = m - 45;
   if (bm < 0) {
@@ -35,7 +44,74 @@ const calculateBoardingTime = (depTime) => {
     bh -= 1;
     if (bh < 0) bh += 24;
   }
-  return `${String(bh).padStart(2, '0')}:${String(bm).padStart(2, '0')}`;
+  
+  const ampm = bh >= 12 ? 'PM' : 'AM';
+  const bh12 = bh % 12 || 12;
+  return `${String(bh12).padStart(2, '0')}:${String(bm).padStart(2, '0')} ${ampm}`;
+};
+
+// Utility to generate deterministic pseudo-random values from strings
+const getSeed = (str) => {
+  if (!str) return 12345;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+};
+
+const getDeterministicValue = (seedStr, arr) => {
+  return arr[getSeed(seedStr) % arr.length];
+};
+
+const getAirportCode = (city) => {
+  if (!city) return 'XXX';
+  const codes = {
+    'Hyderabad': 'HYD', 'Delhi': 'DEL', 'Mumbai': 'BOM', 'Bangalore': 'BLR',
+    'Chennai': 'MAA', 'Kolkata': 'CCU', 'Goa': 'GOI', 'Pune': 'PNQ',
+    'Dubai': 'DXB', 'Singapore': 'SIN', 'London': 'LHR', 'New York': 'JFK'
+  };
+  return codes[city] || city.substring(0, 3).toUpperCase();
+};
+
+const generateMockData = (flightNum, src, dest) => {
+  const seed = `${flightNum}-${src}-${dest}`;
+  const aircrafts = ['Airbus A320neo', 'Boeing 737 MAX', 'Boeing 787 Dreamliner', 'Airbus A350-900', 'Boeing 777-300ER'];
+  const terminals = ['T1', 'T2', 'T3'];
+  const gates = ['A12', 'B07', 'C18', 'D22', 'E05', 'F14'];
+  const baggageOpts = ['15kg Check-in', '20kg Check-in', '25kg Check-in', '30kg Check-in'];
+  
+  const depHours = (getSeed(seed + 'depH') % 18) + 5; 
+  const depMins = (getSeed(seed + 'depM') % 12) * 5; 
+  const durHours = (getSeed(seed + 'durH') % 4) + 1; 
+  const durMins = (getSeed(seed + 'durM') % 12) * 5; 
+  
+  const formatTime = (h, m) => {
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+  };
+
+  const arrH = depHours + durHours + Math.floor((depMins + durMins) / 60);
+  const arrM = (depMins + durMins) % 60;
+  
+  return {
+    aircraft: getDeterministicValue(seed + 'ac', aircrafts),
+    terminal: getDeterministicValue(seed + 'term', terminals),
+    gate: getDeterministicValue(seed + 'gate', gates),
+    baggage: getDeterministicValue(seed + 'bag', baggageOpts),
+    departureTime: formatTime(depHours, depMins),
+    arrivalTime: formatTime(arrH % 24, arrM),
+    duration: `${durHours}h ${durMins > 0 ? durMins + 'm' : ''}`.trim()
+  };
+};
+
+const getAircraftDescription = (ac) => {
+  if (ac.includes('787')) return 'The Boeing 787 Dreamliner is a state-of-the-art widebody aircraft featuring quieter engines, large dimmable windows, and advanced cabin air conditioning filters.';
+  if (ac.includes('350')) return 'The Airbus A350 is a cutting-edge widebody aircraft offering unmatched passenger comfort, ambient lighting, and an incredibly quiet cabin experience.';
+  if (ac.includes('320')) return 'The Airbus A320neo brings next-generation engine technology for a quieter, smoother, and more eco-friendly journey on short to medium haul flights.';
+  if (ac.includes('737')) return 'The Boeing 737 MAX offers enhanced cabin interiors, larger overhead bins, and superior fuel efficiency for a comfortable and sustainable flight.';
+  return `The ${ac} offers a modern and comfortable cabin environment tailored to enhance your inflight experience.`;
 };
 
 // Mock Hotels database based on destination city
@@ -72,6 +148,9 @@ export default function FlightDetails() {
   const navigate = useNavigate();
   const { selectedFlight, searchQuery } = useBooking();
   const travellers = searchQuery?.travellers || 1;
+
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
 
   // Redirect to search if no flight selected (e.g. direct page refresh)
   if (!selectedFlight) {
@@ -120,26 +199,42 @@ export default function FlightDetails() {
   } = selectedFlight;
 
   const stops = numberOfStops !== undefined ? numberOfStops : (originalStops || 0);
-  const departureTime = originalDepartureTime || '—';
-  const arrivalTime = originalArrivalTime || '—';
-  const duration = originalDuration || '—';
-  const aircraft = originalAircraft || '—';
+  
+  const computedSource = source || 'Hyderabad';
+  const computedDest = destination || 'Bangalore';
+  const computedSourceCode = sourceCode || getAirportCode(computedSource);
+  const computedDestCode = destinationCode || getAirportCode(computedDest);
+  const airlineName = airline || 'SkyHorizon Airlines';
+  const airlineCodeStr = airlineCode || 'SH';
+  const flightNumStr = flightNumber || `SH-${(getSeed(computedSource + computedDest) % 900) + 100}`;
+
+  const mock = generateMockData(flightNumStr, computedSource, computedDest);
+
+  const departureTime = originalDepartureTime || mock.departureTime;
+  const arrivalTime = originalArrivalTime || mock.arrivalTime;
+  const duration = originalDuration || mock.duration;
+  const aircraft = originalAircraft || mock.aircraft;
   const cabin = originalCabin || 'Economy';
-  const terminal = originalTerminal || '—';
-  const gate = originalGate || '—';
-  const baggage = originalBaggage || '—';
+  const terminal = originalTerminal || mock.terminal;
+  const gate = originalGate || mock.gate;
+  const baggage = originalBaggage || mock.baggage;
   const refundType = originalRefundType || 'Non-Refundable';
 
   const boardingTime = calculateBoardingTime(departureTime);
 
   // Pricing values
-  const baseFare = price;
+  const baseFare = price || ((getSeed(flightNumStr) % 10000) + 3500);
+  const totalBase = baseFare * travellers;
   const taxes = Math.round(baseFare * 0.12);
+  const totalTaxes = taxes * travellers;
   const convenienceFee = 350;
-  const grandTotal = baseFare + taxes + convenienceFee;
+  const grandTotal = totalBase + totalTaxes + convenienceFee;
+
+  const fleetType = aircraft.includes('Airbus') ? 'Airbus Fleet' : (aircraft.includes('Boeing') ? 'Boeing Fleet' : 'Modern Fleet');
+  const aircraftDesc = getAircraftDescription(aircraft);
 
   // Retrieve destination specific hotels
-  const hotelsList = mockHotels[destination] || defaultHotels;
+  const hotelsList = mockHotels[computedDest] || defaultHotels;
 
   const handleProceedBook = () => {
     navigate('/passenger-details');
@@ -177,12 +272,12 @@ export default function FlightDetails() {
                   {/* Summary header */}
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
                     <div className="flex items-center gap-3">
-                      <AirlineLogo code={airlineCode} className="w-10 h-10 shrink-0" />
+                      <AirlineLogo code={airlineCodeStr} className="w-10 h-10 shrink-0" />
                       <div className="flex flex-col">
-                        <span className="font-extrabold text-base text-white tracking-wide">{airline}</span>
+                        <span className="font-extrabold text-base text-white tracking-wide">{airlineName}</span>
                         <div className="flex items-center gap-2 mt-0.5 text-[10px] font-bold text-slate-450">
                           <span className="bg-slate-800/80 border border-white/5 px-2 py-0.2 rounded uppercase">
-                            {flightNumber}
+                            {flightNumStr}
                           </span>
                           <span>·</span>
                           <span>{cabin} Class</span>
@@ -206,7 +301,7 @@ export default function FlightDetails() {
                     <div className="flex flex-col">
                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Equipment</span>
                       <span className="text-sm font-black text-white mt-1">{aircraft}</span>
-                      <span className="text-[10px] text-slate-500 mt-1 font-semibold">Boeing Fleet</span>
+                      <span className="text-[10px] text-slate-500 mt-1 font-semibold">{fleetType}</span>
                     </div>
 
                     <div className="flex flex-col">
@@ -234,8 +329,8 @@ export default function FlightDetails() {
                     {/* Departure info */}
                     <div className="flex flex-col text-left shrink-0">
                       <span className="text-3xl md:text-4xl font-black text-white tracking-tight">{departureTime}</span>
-                      <span className="text-sm font-black text-gold mt-2 uppercase tracking-wider">{sourceCode}</span>
-                      <span className="text-xs text-slate-400 font-bold mt-1 max-w-[120px] truncate" title={source}>{source}</span>
+                      <span className="text-sm font-black text-gold mt-2 uppercase tracking-wider">{computedSourceCode}</span>
+                      <span className="text-xs text-slate-400 font-bold mt-1 max-w-[120px] truncate" title={computedSource}>{computedSource}</span>
                       <span className="text-[10px] text-slate-500 font-semibold mt-1">T{terminal} · Gate {gate}</span>
                     </div>
 
@@ -263,9 +358,9 @@ export default function FlightDetails() {
                     {/* Arrival info */}
                     <div className="flex flex-col text-right shrink-0">
                       <span className="text-3xl md:text-4xl font-black text-white tracking-tight">{arrivalTime}</span>
-                      <span className="text-sm font-black text-gold mt-2 uppercase tracking-wider">{destinationCode}</span>
-                      <span className="text-xs text-slate-400 font-bold mt-1 max-w-[120px] truncate" title={destination}>{destination}</span>
-                      <span className="text-[10px] text-slate-500 font-semibold mt-1">Delhi Int'l (DEL)</span>
+                      <span className="text-sm font-black text-gold mt-2 uppercase tracking-wider">{computedDestCode}</span>
+                      <span className="text-xs text-slate-400 font-bold mt-1 max-w-[120px] truncate" title={computedDest}>{computedDest}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold mt-1">{computedDest} Int'l ({computedDestCode})</span>
                     </div>
                   </div>
                 </div>
@@ -280,7 +375,7 @@ export default function FlightDetails() {
                   {/* Left: Interactive/Visual representation details */}
                   <div className="flex flex-col gap-4 text-xs font-semibold text-slate-350">
                     <p className="leading-relaxed text-slate-400">
-                      The Boeing 787 Dreamliner is a state-of-the-art widebody aircraft featuring quieter engines, large dimmable windows, and advanced cabin air conditioning filters.
+                      {aircraftDesc}
                     </p>
                     
                     <div className="flex flex-col gap-2.5 pt-2">
@@ -394,7 +489,7 @@ export default function FlightDetails() {
 
               {/* 9. RECOMMENDED HOTELS */}
               <div className="flex flex-col gap-4 text-left mt-2 select-none">
-                <span className="text-[10px] font-black text-gold uppercase tracking-widest pl-2">Hotels in {destination}</span>
+                <span className="text-[10px] font-black text-gold uppercase tracking-widest pl-2">Hotels in {computedDest}</span>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {hotelsList.map((hotel, idx) => (
                     <Card key={idx} variant="glass" className="p-5 flex flex-col gap-3 border border-white/5 hover:border-gold/25 transition-all text-left">
@@ -443,12 +538,12 @@ export default function FlightDetails() {
                 <div className="flex flex-col gap-3.5 text-xs font-semibold text-slate-400">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-500">Base Fare ({travellers}x)</span>
-                    <span className="text-white font-extrabold">₹{baseFare.toLocaleString('en-IN')}</span>
+                    <span className="text-white font-extrabold">₹{totalBase.toLocaleString('en-IN')}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-500">Taxes & Fees</span>
-                    <span className="text-white font-extrabold">₹{taxes.toLocaleString('en-IN')}</span>
+                    <span className="text-white font-extrabold">₹{totalTaxes.toLocaleString('en-IN')}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
@@ -523,14 +618,14 @@ export default function FlightDetails() {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs text-slate-500 font-bold uppercase leading-none">From</span>
-                    <h4 className="text-lg font-black text-white leading-none mt-1">{receiptData.flight.fromCode || sourceCode}</h4>
-                    <span className="text-[10px] font-semibold text-slate-450 leading-none">{receiptData.flight.from || source}</span>
+                    <h4 className="text-lg font-black text-white leading-none mt-1">{receiptData?.flight?.fromCode || computedSourceCode}</h4>
+                    <span className="text-[10px] font-semibold text-slate-450 leading-none">{receiptData?.flight?.from || computedSource}</span>
                   </div>
                   <IoAirplaneOutline className="w-5 h-5 text-gold -rotate-45" />
                   <div className="text-right">
                     <span className="text-xs text-slate-500 font-bold uppercase leading-none">To</span>
-                    <h4 className="text-lg font-black text-white leading-none mt-1">{receiptData.flight.toCode || destinationCode}</h4>
-                    <span className="text-[10px] font-semibold text-slate-455 leading-none">{receiptData.flight.to || destination}</span>
+                    <h4 className="text-lg font-black text-white leading-none mt-1">{receiptData?.flight?.toCode || computedDestCode}</h4>
+                    <span className="text-[10px] font-semibold text-slate-455 leading-none">{receiptData?.flight?.to || computedDest}</span>
                   </div>
                 </div>
 
@@ -541,7 +636,7 @@ export default function FlightDetails() {
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="text-[9px] font-bold text-slate-555 uppercase tracking-widest">Flight No</span>
-                    <span className="text-xs font-extrabold text-white mt-0.5">{receiptData.flight.flightNumber}</span>
+                    <span className="text-xs font-extrabold text-white mt-0.5">{receiptData?.flight?.flightNumber || flightNumStr}</span>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-[9px] font-bold text-slate-555 uppercase tracking-widest">Gate</span>

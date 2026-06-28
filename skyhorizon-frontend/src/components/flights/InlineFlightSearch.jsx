@@ -77,7 +77,9 @@ export default function InlineFlightSearch({ onSearch, loading = false }) {
   const [fromFilter, setFromFilter] = useState('');
   const [toFilter, setToFilter]     = useState('');
 
-  // Refs for outside-click
+  const dateInputRef = useRef(null);
+
+  // Refs for closing dropdowns on click outside
   const fromRef   = useRef(null);
   const toRef     = useRef(null);
   const travRef   = useRef(null);
@@ -264,7 +266,17 @@ export default function InlineFlightSearch({ onSearch, loading = false }) {
 
         {/* DATE */}
         <div>
-          <label className={fieldClass}>
+          <label 
+            onClick={(e) => {
+              e.preventDefault();
+              try {
+                dateInputRef.current?.showPicker();
+              } catch (err) {
+                dateInputRef.current?.focus();
+              }
+            }}
+            className={fieldClass}
+          >
             <IoCalendarOutline className="w-4 h-4 text-slate-400 shrink-0" />
             <div className="flex flex-col w-full relative leading-tight">
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Depart</span>
@@ -275,6 +287,7 @@ export default function InlineFlightSearch({ onSearch, loading = false }) {
                 {departDate ? getDayName(departDate) : ''}
               </span>
               <input
+                ref={dateInputRef}
                 type="date"
                 value={departDate}
                 onChange={e => setDepartDate(e.target.value)}
