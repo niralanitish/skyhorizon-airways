@@ -1,7 +1,7 @@
 package com.skyhorizon.skyhorizon_airways.dto;
 
 public class BookingRequest {
-
+//hi this is program
     private Long flightId;
 
     private String passengerName;
