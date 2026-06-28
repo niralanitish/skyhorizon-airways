@@ -71,7 +71,9 @@ public class SecurityConfig {
                 "/register",
                 "/login",
                 "/api/flights/**",
-                "/api/auth/**"
+                "/api/auth/**",
+                "/api/ai/**",
+                "/api/rag/**"
         ).permitAll()
 
         // Everything else requires login

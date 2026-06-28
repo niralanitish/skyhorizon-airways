@@ -1,16 +1,6 @@
-### Book Flight
-
-POST http://localhost:8080/api/bookings
+POST http://localhost:8080/api/ai/chat
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyaXNoaUBnbWFpbC5jb20iLCJpYXQiOjE3ODIyMjU2MjgsImV4cCI6MTc4MjMxMjAyOH0.58ktoJpPcwNyaqh70YqMMZx-5YQSU624II-wDKAG8Vw
 
 {
-  "flightId": 1,
-  "passengerName": "Rishitha",
-  "passengerEmail": "rishi@gmail.com",
-  "passengerPhone": "9876543210",
-  "passengerAge": 21,
-  "passengerGender": "Female",
-  "travelClass": "Economy",
-  "numberOfSeats": 2
+    "message": "How much cabin baggage is allowed?"
 }

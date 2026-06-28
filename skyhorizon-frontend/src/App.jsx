@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import MyBookings from './pages/MyBookings';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
+import RagUpload from './pages/RagUpload';
 import './index.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/rag" element={<RagUpload />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
