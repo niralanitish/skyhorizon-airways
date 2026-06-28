@@ -59,14 +59,25 @@ public class SecurityConfig {
             throws Exception {
 
         http
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated())
+
+        // Public APIs
+        .requestMatchers(
+                "/",
+                "/register",
+                "/login",
+                "/api/flights/**",
+                "/api/auth/**"
+        ).permitAll()
+
+        // Everything else requires login
+        .anyRequest()
+        .authenticated()
+)
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(
         jwtAuthenticationFilter,

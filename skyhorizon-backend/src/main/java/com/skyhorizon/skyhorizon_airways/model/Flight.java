@@ -1,5 +1,7 @@
 package com.skyhorizon.skyhorizon_airways.model;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,20 +11,51 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 @Entity
-@Table(name = "flights")
 public class Flight {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String flightNumber;
+
+    private String airline;
+
     private String source;
+
     private String destination;
+
+    private LocalDate departureDate;
+
+    private LocalTime departureTime;
+
+    private LocalTime arrivalTime;
+
+    private String duration;
+
+    private String aircraft;
+
     private Double price;
-    private int availableSeats;
-    private int numberOfStops;
+
+    private Integer availableSeats;
+
+    private Integer numberOfStops;
+
+    private String terminal;
+
+    private String gate;
+  
+
+private Double rating;
+
+private Boolean wifi;
+
+private Boolean meal;
+
+private String refundType;
     @Enumerated(EnumType.STRING)
     private FlightStatus status;
+
 
     public Flight() {
 

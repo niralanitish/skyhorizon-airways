@@ -3,7 +3,9 @@ package com.skyhorizon.skyhorizon_airways.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.skyhorizon.skyhorizon_airways.dto.FlightDTO;
 import com.skyhorizon.skyhorizon_airways.exception.ResourceNotFoundException;
+import com.skyhorizon.skyhorizon_airways.mapper.FlightMapper;
 import com.skyhorizon.skyhorizon_airways.model.Flight;
 import org.springframework.stereotype.Service;
 import com.skyhorizon.skyhorizon_airways.repository.FlightRepository;
@@ -35,5 +37,14 @@ public class FlightService {
                     source,
                     destination);
     }
+
+    public List<FlightDTO> getAllFlightsDTO() {
+
+    return flightRepository.findAll()
+            .stream()
+            .map(FlightMapper::toDTO)
+            .toList();
+
+}
 
 }

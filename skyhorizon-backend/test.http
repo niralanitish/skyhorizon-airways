@@ -1,2 +1,16 @@
-GET http://localhost:8080/all-bookings
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyaXNoaUBnbWFpbC5jb20iLCJpYXQiOjE3ODIxMjE3NDQsImV4cCI6MTc4MjIwODE0NH0.lXBWiy47V0Z8jJvA88yDE-jx4964uERUo2Qwrr9sA-M
+### Book Flight
+
+POST http://localhost:8080/api/bookings
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyaXNoaUBnbWFpbC5jb20iLCJpYXQiOjE3ODIyMjU2MjgsImV4cCI6MTc4MjMxMjAyOH0.58ktoJpPcwNyaqh70YqMMZx-5YQSU624II-wDKAG8Vw
+
+{
+  "flightId": 1,
+  "passengerName": "Rishitha",
+  "passengerEmail": "rishi@gmail.com",
+  "passengerPhone": "9876543210",
+  "passengerAge": 21,
+  "passengerGender": "Female",
+  "travelClass": "Economy",
+  "numberOfSeats": 2
+}
