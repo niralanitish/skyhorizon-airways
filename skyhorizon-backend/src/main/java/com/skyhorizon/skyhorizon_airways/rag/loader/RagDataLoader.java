@@ -2,6 +2,7 @@ package com.skyhorizon.skyhorizon_airways.rag.loader;
 
 import java.io.InputStream;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -13,12 +14,22 @@ public class RagDataLoader implements CommandLineRunner {
 
     private final PdfService pdfService;
 
+    @Value("${rag.load-on-startup:false}")
+    private boolean loadOnStartup;
+
     public RagDataLoader(PdfService pdfService) {
         this.pdfService = pdfService;
     }
 
     @Override
     public void run(String... args) throws Exception {
+
+        if (!loadOnStartup) {
+            System.out.println("=================================");
+            System.out.println("Skipping RAG document loading...");
+            System.out.println("=================================");
+            return;
+        }
 
         System.out.println("=================================");
         System.out.println("Loading RAG Documents...");
