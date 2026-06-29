@@ -21,9 +21,11 @@ public class EmbeddingService {
 
     private final String geminiApiKey;
     private final RestClient restClient;
-    private static final String GEMINI_EMBED_URL = "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent";
-    private static final String MODEL_NAME = "models/text-embedding-004";
+    private static final String GEMINI_EMBED_URL =
+"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent";
 
+private static final String MODEL_NAME =
+"models/gemini-embedding-001";
     private long lastCallTime = 0;
     private static final long RATE_LIMIT_DELAY_MS = 1000; // 1 second between calls
 
