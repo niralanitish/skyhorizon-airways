@@ -1,14 +1,16 @@
 import axios from "axios";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: `${API_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 api.interceptors.request.use((config) => {
-
   const token = localStorage.getItem("skyhorizon_token");
 
   if (token) {
@@ -21,29 +23,42 @@ api.interceptors.request.use((config) => {
 // Authentication endpoints
 api.login = async (email, password) => {
   try {
-    const response = await axios.post("http://localhost:8080/login", { email, password });
+    const response = await axios.post(`${API_URL}/login`, {
+      email,
+      password,
+    });
+
     return {
       success: true,
       ...response.data,
     };
   } catch (error) {
-    const message = error.response?.data?.message || error.response?.data || error.message || "Invalid credentials";
-    throw new Error(typeof message === "string" ? message : "Invalid credentials");
+    const message =
+      error.response?.data?.message ||
+      error.response?.data ||
+      error.message ||
+      "Invalid credentials";
+
+    throw new Error(
+      typeof message === "string" ? message : "Invalid credentials"
+    );
   }
 };
 
 api.register = async (name, email, password) => {
   try {
-    const response = await axios.post("http://localhost:8080/register", { name, email, password });
-    
-    // The backend returns null if the email is already registered
+    const response = await axios.post(`${API_URL}/register`, {
+      name,
+      email,
+      password,
+    });
+
     if (!response.data) {
-      throw new Error("Email is already registered. Please log in.");
+      throw new Error("Email is already registered.");
     }
-    
-    // Auto-login the user to retrieve the JWT token
+
     const loginData = await api.login(email, password);
-    
+
     return {
       success: true,
       user: {
@@ -55,35 +70,40 @@ api.register = async (name, email, password) => {
       },
     };
   } catch (error) {
-    const message = error.response?.data?.message || error.response?.data || error.message || "Registration failed";
-    throw new Error(typeof message === "string" ? message : "Registration failed");
+    const message =
+      error.response?.data?.message ||
+      error.response?.data ||
+      error.message ||
+      "Registration failed";
+
+    throw new Error(
+      typeof message === "string"
+        ? message
+        : "Registration failed"
+    );
   }
 };
 
-// AI endpoint
 api.askAI = async (message) => {
   try {
-    const response = await api.post("/ai/chat", { message });
+    const response = await api.post("/ai/chat", {
+      message,
+    });
+
     return response.data;
   } catch (error) {
-    const errorMsg = error.response?.data?.message || error.response?.data || error.message || "Failed to connect to AI service";
-    throw new Error(typeof errorMsg === "string" ? errorMsg : "Failed to connect to AI service");
-  }
-};
+    const errorMsg =
+      error.response?.data?.message ||
+      error.response?.data ||
+      error.message ||
+      "Failed to connect AI";
 
-export const airportCodes = {
-  Hyderabad: "HYD",
-  Delhi: "DEL",
-  Mumbai: "BOM",
-  Bangalore: "BLR",
-  Chennai: "MAA",
-  Kolkata: "CCU",
-  Pune: "PNQ",
-  Goa: "GOI",
-  Ahmedabad: "AMD",
-  Jaipur: "JAI",
-  Kochi: "COK",
-  Lucknow: "LKO",
+    throw new Error(
+      typeof errorMsg === "string"
+        ? errorMsg
+        : "Failed to connect AI"
+    );
+  }
 };
 
 export default api;
