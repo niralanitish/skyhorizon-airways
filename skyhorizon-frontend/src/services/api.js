@@ -106,4 +106,19 @@ api.askAI = async (message) => {
   }
 };
 
+
+export const airportCodes = {
+  Hyderabad: "HYD",
+  Delhi: "DEL",
+  Mumbai: "BOM",
+  Bangalore: "BLR",
+  Chennai: "MAA",
+  Kolkata: "CCU",
+  Pune: "PNQ",
+  Goa: "GOI",
+  Ahmedabad: "AMD",
+  Jaipur: "JAI",
+  Kochi: "COK",
+  Lucknow: "LKO",
+};
 export default api;
