@@ -67,14 +67,19 @@ public class SecurityConfig {
 
         // Public APIs
         .requestMatchers(
-                "/",
-                "/register",
-                "/login",
-                "/api/flights/**",
-                "/api/auth/**",
-                "/api/ai/**",
-                "/api/rag/**"
-        ).permitAll()
+        "/",
+        "/register",
+        "/login",
+
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/v3/api-docs/**",
+
+        "/api/flights/**",
+        "/api/auth/**",
+        "/api/ai/**",
+        "/api/rag/**"
+).permitAll()
 
         // Everything else requires login
         .anyRequest()
